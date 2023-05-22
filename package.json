@@ -4,7 +4,8 @@
   "description": "introduction to tailwindcss and basics",
   "main": "index.js",
   "scripts": {
-    "dev": "vite"
+    "dev": "vite",
+    "build": "vite build"
   },
   "keywords": [],
   "author": "",
