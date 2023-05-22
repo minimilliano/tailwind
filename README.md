@@ -1,2 +1,2 @@
 # tailwind
-introduction to tailwindcss
+introduction to tailwindcss and basics
