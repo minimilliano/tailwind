@@ -6,8 +6,29 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>Document</title>
 	<link rel="stylesheet" href="/build/tailwind.css">
+	<script>
+		async function searchQuery(){
+			const inputValue = document.getElementById("queryInput").value
+			const request = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${inputValue}`);
+			const response = await request.json();
+			const wordMeaning = response[0]["meanings"][0]["definitions"][0]["definition"]
+			document.getElementById("queryOutput").value = wordMeaning
+		}
+	</script>
 </head>
 <body>
-	<h1 class="font-bold text-4xl text-center uppercase">Tailwind-base</h1>
+	<div class="w-96 mx-auto">
+		<h1 class="font-bold text-4xl text-center mt-8">Word Dictionary</h1>
+		<div class="w-full flex flex-col">
+			<input type="text" id="queryInput" class="mt-8 mx-auto w-full p-4 border-gray-500 border-2 rounded-md shadow-lg resize-none text" placeholder="Enter word.." />
+			<div class="inline-flex justify-end">
+				<button onclick="searchQuery()" class="bg-blue-700 shadow-lg focus:bg-blue-800 transform hover:scale-105 duration-200 text-white px-4 py-1 font-semibold rounded mt-2">Search</button>
+			</div>
+			<div>
+				<textarea id="queryOutput" class="mt-8 mx-auto w-full h-48 p-4 bg-gray-100 border-gray-500 border-2 rounded-md shadow-lg resize-none outline-none text" readonly ></textarea>
+			</div>
+		</div>
+	</div>
+	
 </body>
 </html>
