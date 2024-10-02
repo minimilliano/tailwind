@@ -6,26 +6,159 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>Document</title>
 	<link rel="stylesheet" href="/build/tailwind.css">
-	<script>
-		async function searchQuery(){
-			const inputValue = document.getElementById("queryInput").value
+
+<script>
+		async function searchQuery() {
+			const inputValue = document.getElementById("queryInput").value;
+			const output1 = document.getElementById("queryOutput");
+			output1.style.display = "none"; // Hide output initially
+	
+			// Fetch data from the dictionary API
 			const request = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${inputValue}`);
 			const response = await request.json();
-			const wordMeaning = response[0]["meanings"][0]["definitions"][0]["definition"]
-			document.getElementById("queryOutput").value = wordMeaning
+			console.log("response", response);
+
+			// Check if the response is valid
+			document.getElementById("error").style.display = "none"
+			if (response.title === "No Definitions Found") {
+				document.getElementById("error").style.display = "block"
+				return
+			}
+
+
+			// Extract the word and origin
+			const word = response[0]["word"]; // The word itself
+			const origin = response[0]["origin"] ; // The word origin
+		
+
+			  // Extract phonetic and general audio
+			  const phonetics = response[0]["phonetics"] || []; // Phonetics array for audio
+        let phoneticAudio = null; // Placeholder for phonetic audio
+        let generalAudio = null;  // Placeholder for general audio
+
+        // Loop through phonetics and assign the first available phonetic and general audio
+        phonetics.forEach(phonetic => {
+            if (phonetic.audio) {
+				if (phonetic.text && !phoneticAudio) {
+					phoneticAudio = phonetic.audio;
+                } else if (!phonetic.text && !generalAudio) {
+                    generalAudio = phonetic.audio;
+                }
+            }
+        });
+		    // Handle phonetic audio
+			if (phoneticAudio) {
+            document.getElementById("phonetic_audio_src").src = phoneticAudio;
+            document.getElementById("phonetic_audio").style.display = "block";
+			document.getElementById("phonetic_audio").load();
+        } else {
+            document.getElementById("phonetics-a").style.display = "none"; // Hide if not available
+        }
+
+        // Handle general audio
+        if (generalAudio) {
+            document.getElementById("general_audio_src").src = generalAudio;
+            document.getElementById("general_audio").style.display = "block";
+			document.getElementById("general_audio").load(); 
+        } else {
+            document.getElementById("phonetics-g").style.display = "none"; // Hide if not available
+        }
+			// Assign word and origin
+			document.getElementById("word").textContent = word;
+			document.getElementById("origin").textContent = origin;
+			if(!origin) document.getElementById("origin-container").style.display = "none"
+			
+
+        // Loop through meanings and extract antonyms, part of speech, synonyms, definitions, and examples
+        response[0]["meanings"].forEach(meaning => {
+            const partOfSpeech = meaning["partOfSpeech"];
+            const antonyms = meaning["antonyms"].length > 0 ? meaning["antonyms"].join(", ") : "No antonyms available";
+            const synonyms = meaning["synonyms"].length > 0 ? meaning["synonyms"].join(", ") : "No synonyms available";
+
+            // For each definition
+            meaning["definitions"].forEach((definitionObj, index) => {
+                const definition = definitionObj["definition"];
+                const example = definitionObj["example"] || "Example not available";
+
+                // Assign values to respective elements
+                document.getElementById("part_of_speech").textContent = partOfSpeech;
+                document.getElementById("definition").textContent = definition;
+                document.getElementById("example").textContent = example;
+                document.getElementById("antonyms").textContent = antonyms;
+                document.getElementById("synonyms").textContent = synonyms;
+            });
+        });
+
+        // Show output
+        output1.style.display = "block";
 		}
-	</script>
+</script>
+	
 </head>
-<body>
-	<div class="w-96 mx-auto">
-		<h1 class="font-bold text-4xl text-center mt-8">Word Dictionary</h1>
-		<div class="w-full flex flex-col">
-			<input type="text" id="queryInput" class="mt-8 mx-auto w-full p-4 border-gray-500 border-2 rounded-md shadow-lg resize-none text" placeholder="Enter word.." />
-			<div class="inline-flex justify-end">
-				<button onclick="searchQuery()" class="bg-blue-700 shadow-lg focus:bg-blue-800 transform hover:scale-105 duration-200 text-white px-4 py-1 font-semibold rounded mt-2">Search</button>
+<body class="relative">
+	<div class="w-96 h-screen sm:w-2/5 mx-auto mt-32">
+		<h1 class="font-bold text-4xl lg:text-6xl text-center mt-8">Word Dictionary</h1>
+		<div class="w-full h-full flex flex-col">
+			<input type="text" autocomplete="off" id="queryInput" class="mt-8 mb-4 mx-auto w-full p-4 border-gray-500 border-2 rounded-md shadow-lg resize-none text" placeholder="Enter word.." />
+			
+			<div class="inline-flex justify-center sm:justify-between">
+				<div class="hidden md:grid grid-cols-3 gap-2">
+					<span class="col-span-1 hidden" id="error"><h2 class="font-semibold text-red-400 whitespace-nowrap">Word not found!</h2></span>
+				</div>
+				<button onclick="searchQuery()" class="bg-blue-700 shadow-lg focus:bg-blue-800 transform hover:scale-105 duration-200 text-white  px-8 sm:px-4 py-2 font-semibold col-span-1 rounded mt-2">Search</button>
 			</div>
-			<div>
-				<textarea id="queryOutput" class="mt-8 mx-auto w-full h-48 p-4 bg-gray-100 border-gray-500 border-2 rounded-md shadow-lg resize-none outline-none text" readonly ></textarea>
+			
+			<div id="queryOutput" class="hidden min-h-[24rem] h-auto mt-8 mx-auto w-full p-4 bg-gray-100 border-gray-500 border-2 rounded-md shadow-lg overflow-y-scroll">
+				<!-- Output area -->
+				<div class="grid gap-4 w-full">
+					
+					<div class="grid grid-cols-3 gap-2">
+						<span class="col-span-1"><h2 class="font-semibold">Word:</h2></span>
+						<span id="word" class="col-span-2"></span>
+					</div>
+					<div id="origin-container" class="grid grid-cols-3 gap-2">
+						<span class="col-span-1"><h2 class="font-semibold">Origin:</h2></span>
+						<span id="origin" class="col-span-2"></span>
+					</div>
+
+					<div id="phonetics-a" class="grid grid-cols-3 gap-2">
+						<span class="col-span-1 flex items-center"><h2 class="font-semibold">Phonetic Audio:</h2></span>
+						<audio id="phonetic_audio" class="col-span-2" controls>
+							<source id="phonetic_audio_src" src="" type="audio/mpeg">
+							Your browser does not support the audio tag.
+						</audio>
+					</div>
+				
+					<!-- General Audio -->
+					<div id="phonetics-g" class="grid grid-cols-3 gap-2">
+						<span class="col-span-1 flex items-center"><h2 class="font-semibold">General Audio:</h2></span>
+						<audio id="general_audio" class="col-span-2" controls>
+							<source id="general_audio_src" src="" type="audio/mpeg">
+							Your browser does not support the audio tag.
+						</audio>
+					</div>
+					<div class="grid grid-cols-3 gap-2">
+						<span class="col-span-1"><h2 class="font-semibold">Synonyms:</h2></span>
+						<span id="synonyms" class="col-span-2"></span>
+					</div>
+					<div class="grid grid-cols-3 gap-2">
+						<span class="col-span-1"><h2 class="font-semibold">Antonyms:</h2></span>
+						<span id="antonyms" class="col-span-2"></span>
+					</div>
+					<div class="grid grid-cols-3 gap-2">
+						<span class="col-span-1"><h2 class="font-semibold">Part of Speech:</h2></span>
+						<span id="part_of_speech" class="col-span-2"></span>
+					</div>
+					<div class="grid grid-cols-3 gap-2">
+						<span class="col-span-1"><h2 class="font-semibold ">Definition:</h2></span>
+						<span id="definition" class="col-span-2"></span>
+					</div>
+					<div class="grid grid-cols-3 gap-2">
+						<span class="col-span-1"><h2 class="font-semibold">Example:</h2></span>
+						<span id="example" class="col-span-2"></span>
+					</div>
+				</div>
+				
 			</div>
 		</div>
 	</div>
